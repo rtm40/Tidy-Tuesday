@@ -1,5 +1,7 @@
 ```{r libraries}
 library(tidyverse)
+library(showtext)
+library(ggtext)
 ```
 
 ``` {r data}
@@ -9,8 +11,14 @@ languages <- tuesdata$languages
 language_scripts <- tuesdata$language_scripts
 language_countries <- tuesdata$language_countries
 country_regions <- tuesdata$country_regions
+```
 
-colscheme <- c("#007000", "#FFBF00", "#D2222D")
+```{r text-elements}
+colscheme <- c("#D2222D", "#FFBF00", "#007000")
+font_add_google("DM Serif Display", "dm")
+showtext_auto()
+
+title <- "<br><span style='color:#D2222D'>**AfriSenti:**</span> A Language Sentiment Analysis"
 ```
 
 ```{r wrangling}
@@ -23,18 +31,48 @@ plotset <- afrisenti %>%
   select(label, country, region) %>%
   group_by(label, region, country) %>%
   count() %>%
-  rename(count = "n") %>%
-  mutate(label = factor(
-    label,
-    levels = c("positive", "neutral", "negative")
-    )) %>%
+  rename(num = "n") %>%
+  mutate(
+    label = factor(
+      label,
+      levels = c(
+        "negative",
+        "neutral",
+        "positive"
+      )
+    ), 
+    region = if_else(
+      region %in% c("North Africa", "Northern Africa"),
+      "Northern Africa",
+      region
+    ),
+    region = factor(
+      region,
+      levels = c(
+        "East Africa",
+        "Southern Africa",
+        "Northern Africa",
+        "West Africa"
+      )
+    ),
+  ) %>%
   ungroup()
 ```
 
-```{r plot}
-ggplot(plotset, aes(x = region, y = count, fill = label)) +
-  geom_col(position = "fill", stat = "identity") +
+```{r plot, warning = F}
+ggplot(plotset, aes(x = num, y = region, fill = label)) +
+  geom_col(position = "fill", stat = "identity", show.legend = FALSE, width = 0.7) +
   scale_fill_manual(values = colscheme) +
-  theme_minimal()
+  labs(title = title) +
+  theme_minimal() +
+  theme(text = element_text(family = "dm"),
+        plot.background = element_rect(fill = "#FDECCD"),
+        legend.position = "top",
+        axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size = 12, hjust = 1),
+        plot.title = element_markdown(size = 25, hjust = 1.8, vjust = -4),
+        panel.grid = element_blank(),
+        aspect.ratio = 0.5)
 ```
 
