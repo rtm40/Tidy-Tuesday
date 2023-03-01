@@ -2,6 +2,7 @@
 library(tidyverse)
 library(showtext)
 library(ggtext)
+library(patchwork)
 ```
 
 ``` {r data}
@@ -19,6 +20,18 @@ font_add_google("DM Serif Display", "dm")
 showtext_auto()
 
 title <- "<br><span style='color:#D2222D'>**AfriSenti:**</span> A Language Sentiment Analysis"
+
+north <- "**Northern African**"
+north_sub <- "*Algeria - Morocco*"
+
+west <- "**West African**"
+west_sub <- "*Cameroon - Ghana - Nigeria*"
+
+east <- "**East African**"
+east_sub <- "*Ethiopia - Kenya - Mozambique - Rwanda - Tanzania*"
+
+south <- "**Southern African**"
+south_sub <- "*Eswatini - Mozambique - South Africa - Zimbabwe*"
 ```
 
 ```{r wrangling}
@@ -43,36 +56,141 @@ plotset <- afrisenti %>%
     ), 
     region = if_else(
       region %in% c("North Africa", "Northern Africa"),
-      "Northern Africa",
-      region
+      "Northern African",
+      paste0(region, "n")
     ),
     region = factor(
       region,
       levels = c(
-        "East Africa",
-        "Southern Africa",
-        "Northern Africa",
-        "West Africa"
+        "East African",
+        "Southern African",
+        "Northern African",
+        "West African"
       )
     ),
   ) %>%
   ungroup()
 ```
 
-```{r plot, warning = F}
-ggplot(plotset, aes(x = num, y = region, fill = label)) +
+```{r plot-bars, warning = F}
+bars_plot <- ggplot(plotset, aes(x = num, y = region, fill = label)) +
   geom_col(position = "fill", stat = "identity", show.legend = FALSE, width = 0.7) +
   scale_fill_manual(values = colscheme) +
-  labs(title = title) +
+  #labs(title = title) +
   theme_minimal() +
   theme(text = element_text(family = "dm"),
         plot.background = element_rect(fill = "#FDECCD"),
         legend.position = "top",
         axis.title = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_text(size = 12, hjust = 1),
+        axis.text = element_blank(),
+        #axis.text.y = element_text(size = 12, hjust = 1),
         plot.title = element_markdown(size = 25, hjust = 1.8, vjust = -4),
         panel.grid = element_blank(),
-        aspect.ratio = 0.5)
+        aspect.ratio = 1)
+```
+
+```{r plot-text}
+text_plot <- ggplot() +
+  coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+  theme_minimal() +
+  annotate(
+    geom = "richtext",
+    x = 0.5,
+    y = 0.89,
+    label = west,
+    label.color = NA,
+    fill = NA,
+    family = "dm",
+    size = 9
+  ) +
+  annotate(
+    geom = "richtext",
+    x = 0.5,
+    y = 0.84,
+    label = west_sub,
+    label.color = NA,
+    fill = NA,
+    family = "dm",
+    size = 3
+  ) +
+  annotate(
+    geom = "richtext",
+    x = 0.5,
+    y = 0.64,
+    label = north,
+    label.color = NA,
+    fill = NA,
+    family = "dm",
+    size = 9
+  ) +
+  annotate(
+    geom = "richtext",
+    x = 0.5,
+    y = 0.59,
+    label = north_sub,
+    label.color = NA,
+    fill = NA,
+    family = "dm",
+    size = 3
+  ) +
+  annotate(
+    geom = "richtext",
+    x = 0.5,
+    y = 0.38,
+    label = south,
+    label.color = NA,
+    fill = NA,
+    family = "dm",
+    size = 9
+  ) +
+  annotate(
+    geom = "richtext",
+    x = 0.5,
+    y = 0.33,
+    label = south_sub,
+    label.color = NA,
+    fill = NA,
+    family = "dm",
+    size = 3
+  ) +
+  annotate(
+    geom = "richtext",
+    x = 0.5,
+    y = 0.12,
+    label = east,
+    label.color = NA,
+    fill = NA,
+    family = "dm",
+    size = 9
+  ) +
+  annotate(
+    geom = "richtext",
+    x = 0.5,
+    y = 0.07,
+    label = east_sub,
+    label.color = NA,
+    fill = NA,
+    family = "dm",
+    size = 3
+  ) +
+  theme(text = element_text(family = "dm"),
+        plot.background = element_rect(fill = "#FDECCD"),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        panel.grid = element_blank(),
+        aspect.ratio = 1)
+```
+
+```{r title-plot}
+title_plot <- ggplot() +
+  theme_void() +
+  theme(text = element_text(family = "dm"),
+        plot.background = element_rect(fill = "#FDECCD"),
+        aspect.ratio = 1)
+```
+
+```{r patchwork}
+title_plot / (bars_plot + text_plot) +
+  plot_layout(heights = c(0.22, 1))
 ```
 
