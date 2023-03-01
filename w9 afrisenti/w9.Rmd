@@ -3,6 +3,7 @@ library(tidyverse)
 library(showtext)
 library(ggtext)
 library(patchwork)
+library(glue)
 ```
 
 ``` {r data}
@@ -19,7 +20,12 @@ colscheme <- c("#D2222D", "#FFBF00", "#007000")
 font_add_google("DM Serif Display", "dm")
 showtext_auto()
 
-title <- "<br><span style='color:#D2222D'>**AfriSenti:**</span> A Language Sentiment Analysis"
+title <- "<br><span style='color:#D2222D'>**AfriSenti:**</span> A Linguistic Analysis"
+subtitle <- glue("A look into the proportion of African-language 
+<span style='color:#26A7DE'>Tweets</span> with 
+<span style='color:{colscheme[3]}'>positive</span>,
+<span style='color:{colscheme[2]}'>neutral</span>, and 
+<span style='color:{colscheme[1]}'>negative</span> sentiment across African regions")
 
 north <- "**Northern African**"
 north_sub <- "*Algeria - Morocco*"
@@ -41,24 +47,31 @@ plotset <- afrisenti %>%
   left_join(country_regions, by = "country") %>%
   # mozambique already counted in southern and eastern africa
   filter(region != "Southeastern Africa") %>%
-  select(label, country, region) %>%
-  group_by(label, region, country) %>%
-  count() %>%
-  rename(num = "n") %>%
   mutate(
     label = factor(
       label,
       levels = c(
-        "negative",
+        "positive",
         "neutral",
-        "positive"
+        "negative"
       )
     ), 
     region = if_else(
       region %in% c("North Africa", "Northern Africa"),
       "Northern African",
       paste0(region, "n")
-    ),
+    )
+  ) %>%
+  select(label, region) %>%
+  group_by(label, region) %>%
+  count() %>%
+  rename(num = "n") %>%
+  ungroup() %>%
+  # get percent of each sentiment for each region
+  group_by(region) %>%
+  mutate(
+    percent = round(num/sum(num), 2),
+    xpos = cumsum(percent),
     region = factor(
       region,
       levels = c(
@@ -67,19 +80,30 @@ plotset <- afrisenti %>%
         "Northern African",
         "West African"
       )
-    ),
-  ) %>%
+    )) %>%
+  arrange(region) %>%
   ungroup()
 ```
 
 ```{r plot-bars, warning = F}
-bars_plot <- ggplot(plotset, aes(x = num, y = region, fill = label)) +
-  geom_col(position = "fill", stat = "identity", show.legend = FALSE, width = 0.7) +
+bars_plot <- ggplot(plotset, aes(x = percent, y = region, fill = fct_rev(label))) +
+  geom_col(stat = "identity", show.legend = FALSE, width = 0.7) +
+  geom_text(
+    position = position_stack(vjust = 0.5),
+    size = 8,
+    label = paste0(100*plotset$percent, "%"),
+    color = "white",
+    fontface = "bold",
+    family = "dm"
+  ) +
+  geom_hline(yintercept = 1.5) +
+  geom_hline(yintercept = 2.5) +
+  geom_hline(yintercept = 3.5) +
+  coord_cartesian(clip = "off") +
   scale_fill_manual(values = colscheme) +
-  #labs(title = title) +
   theme_minimal() +
   theme(text = element_text(family = "dm"),
-        plot.background = element_rect(fill = "#FDECCD"),
+        plot.background = element_rect(fill = "#FDECCD", color = NA),
         legend.position = "top",
         axis.title = element_blank(),
         axis.text = element_blank(),
@@ -91,12 +115,15 @@ bars_plot <- ggplot(plotset, aes(x = num, y = region, fill = label)) +
 
 ```{r plot-text}
 text_plot <- ggplot() +
+  geom_hline(yintercept = 0.761) +
+  geom_hline(yintercept = 0.5) +
+  geom_hline(yintercept = 0.239) +
   coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
   theme_minimal() +
   annotate(
     geom = "richtext",
     x = 0.5,
-    y = 0.89,
+    y = 0.895,
     label = west,
     label.color = NA,
     fill = NA,
@@ -116,7 +143,7 @@ text_plot <- ggplot() +
   annotate(
     geom = "richtext",
     x = 0.5,
-    y = 0.64,
+    y = 0.63,
     label = north,
     label.color = NA,
     fill = NA,
@@ -126,7 +153,7 @@ text_plot <- ggplot() +
   annotate(
     geom = "richtext",
     x = 0.5,
-    y = 0.59,
+    y = 0.575,
     label = north_sub,
     label.color = NA,
     fill = NA,
@@ -136,7 +163,7 @@ text_plot <- ggplot() +
   annotate(
     geom = "richtext",
     x = 0.5,
-    y = 0.38,
+    y = 0.375,
     label = south,
     label.color = NA,
     fill = NA,
@@ -146,7 +173,7 @@ text_plot <- ggplot() +
   annotate(
     geom = "richtext",
     x = 0.5,
-    y = 0.33,
+    y = 0.32,
     label = south_sub,
     label.color = NA,
     fill = NA,
@@ -156,7 +183,7 @@ text_plot <- ggplot() +
   annotate(
     geom = "richtext",
     x = 0.5,
-    y = 0.12,
+    y = 0.115,
     label = east,
     label.color = NA,
     fill = NA,
@@ -166,7 +193,7 @@ text_plot <- ggplot() +
   annotate(
     geom = "richtext",
     x = 0.5,
-    y = 0.07,
+    y = 0.06,
     label = east_sub,
     label.color = NA,
     fill = NA,
@@ -174,23 +201,20 @@ text_plot <- ggplot() +
     size = 3
   ) +
   theme(text = element_text(family = "dm"),
-        plot.background = element_rect(fill = "#FDECCD"),
+        plot.background = element_rect(fill = "#FDECCD", color = NA),
         axis.title = element_blank(),
         axis.text = element_blank(),
         panel.grid = element_blank(),
         aspect.ratio = 1)
 ```
 
-```{r title-plot}
-title_plot <- ggplot() +
-  theme_void() +
-  theme(text = element_text(family = "dm"),
-        plot.background = element_rect(fill = "#FDECCD"),
-        aspect.ratio = 1)
-```
-
 ```{r patchwork}
-title_plot / (bars_plot + text_plot) +
-  plot_layout(heights = c(0.22, 1))
+(bars_plot + text_plot) +
+  plot_layout(widths = c(1, 1)) +
+  plot_annotation(title = title, subtitle = subtitle) &
+  theme(panel.border = element_rect(fill = NA, color = NA),
+        plot.title = element_markdown(hjust = 0.5, family = "dm", size = 26),
+        plot.subtitle = element_markdown(hjust = 0.5, family = "dm", size = 9),
+        plot.background = element_rect(fill = "#FDECCD"))
 ```
 
