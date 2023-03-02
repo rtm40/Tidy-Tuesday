@@ -18,7 +18,11 @@ country_regions <- tuesdata$country_regions
 ```{r text-elements}
 colscheme <- c("#D2222D", "#FFBF00", "#007000")
 font_add_google("DM Serif Display", "dm")
+font_add("brands", regular = "fonts/fa-brands-400.ttf")
 showtext_auto()
+
+twitter <- glue("<span style='font-family:brands; color:black'>&#xf099;</span>")
+github <- glue("<span style='font-family:brands; color:black'>&#xf09b;</span>")
 
 title <- "<br><span style='color:#D2222D'>**AfriSenti:**</span> A Linguistic Analysis"
 subtitle <- glue("A look into the proportion of African-language 
@@ -26,18 +30,19 @@ subtitle <- glue("A look into the proportion of African-language
 <span style='color:{colscheme[3]}'>positive</span>,
 <span style='color:{colscheme[2]}'>neutral</span>, and 
 <span style='color:{colscheme[1]}'>negative</span> sentiment across African regions")
+caption <- glue("{twitter} @ryantmitchell9   •   {github} rtm40/Tidy-Tuesday")
 
 north <- "**Northern African**"
-north_sub <- "*Algeria - Morocco*"
+north_sub <- "*Algeria • Morocco*"
 
 west <- "**West African**"
-west_sub <- "*Cameroon - Ghana - Nigeria*"
+west_sub <- "*Cameroon • Ghana • Nigeria*"
 
 east <- "**East African**"
-east_sub <- "*Ethiopia - Kenya - Mozambique - Rwanda - Tanzania*"
+east_sub <- "*Ethiopia • Kenya • Mozambique • Rwanda • Tanzania*"
 
 south <- "**Southern African**"
-south_sub <- "*Eswatini - Mozambique - South Africa - Zimbabwe*"
+south_sub <- "*Eswatini • Mozambique • South Africa • Zimbabwe*"
 ```
 
 ```{r wrangling}
@@ -86,7 +91,8 @@ plotset <- afrisenti %>%
 ```
 
 ```{r plot-bars, warning = F}
-bars_plot <- ggplot(plotset, aes(x = percent, y = region, fill = fct_rev(label))) +
+bars_plot <-
+  ggplot(plotset, aes(x = percent, y = region, fill = fct_rev(label))) +
   geom_col(stat = "identity", show.legend = FALSE, width = 0.7) +
   geom_text(
     position = position_stack(vjust = 0.5),
@@ -107,7 +113,6 @@ bars_plot <- ggplot(plotset, aes(x = percent, y = region, fill = fct_rev(label))
         legend.position = "top",
         axis.title = element_blank(),
         axis.text = element_blank(),
-        #axis.text.y = element_text(size = 12, hjust = 1),
         plot.title = element_markdown(size = 25, hjust = 1.8, vjust = -4),
         panel.grid = element_blank(),
         aspect.ratio = 1)
@@ -200,21 +205,42 @@ text_plot <- ggplot() +
     family = "dm",
     size = 3
   ) +
-  theme(text = element_text(family = "dm"),
-        plot.background = element_rect(fill = "#FDECCD", color = NA),
-        axis.title = element_blank(),
-        axis.text = element_blank(),
-        panel.grid = element_blank(),
-        aspect.ratio = 1)
+  theme(
+    text = element_text(family = "dm"),
+    plot.background = element_rect(fill = "#FDECCD", color = NA),
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    panel.grid = element_blank(),
+    aspect.ratio = 1
+  )
 ```
 
 ```{r patchwork}
 (bars_plot + text_plot) +
   plot_layout(widths = c(1, 1)) +
-  plot_annotation(title = title, subtitle = subtitle) &
-  theme(panel.border = element_rect(fill = NA, color = NA),
-        plot.title = element_markdown(hjust = 0.5, family = "dm", size = 26),
-        plot.subtitle = element_markdown(hjust = 0.5, family = "dm", size = 9),
-        plot.background = element_rect(fill = "#FDECCD"))
+  plot_annotation(title = title, subtitle = subtitle, caption = caption) &
+  theme(
+    panel.border = element_rect(fill = NA, color = NA),
+    plot.title = element_markdown(
+      hjust = 0.5,
+      family = "dm",
+      size = 26,
+      margin = margin(t = -10, b = -10)
+    ),
+    plot.subtitle = element_markdown(
+      hjust = 0.5,
+      family = "dm",
+      size = 9,
+      margin = margin(t = 14)
+    ),
+    plot.caption = element_markdown(
+      hjust = 0.5,
+      family = "dm",
+      size = 6,
+      margin = margin(t = -10)
+    ),
+    plot.background = element_rect(fill = "#FDECCD")
+  )
 ```
+
 
